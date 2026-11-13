@@ -8,7 +8,7 @@ import base64
 st.set_page_config(page_title="MP4 to WebP 일괄 변환기 (랜덤 파일명)", page_icon="🖼️", layout="centered")
 
 st.title("🖼️ 양의 WEBP 변환기")
-st.write("10자리 랜덤 숫자 파일명으로 도출 & 화질 너프, 일괄 다운로드 가능.")
+st.write("10자리 랜덤 숫자 파일명 & 해상도 조정 & 일괄 다운로드 가능")
 st.write("여러 MP4 파일을 선택하면 일괄 변환하며 다운로드할 수 있습니다.")
 
 # 세션 상태 초기화
@@ -63,8 +63,8 @@ if uploaded_files:
                     '-y',
                     '-i', tmp_input_path,
                     '-vcodec', 'libwebp',
-                    # 💡 1920 기준 정확히 800으로 떨어지도록 정밀 수치(0.41666666) 적용
-                    '-filter:v', 'scale=iw*0.41666666:ih*0.41666666,fps=fps=min(source_fps\,30)',
+                    # 1920x1080 기준 정확히 800x450이 나오도록 0.417 배율 적용
+                    '-filter:v', 'scale=iw*0.417:ih*0.417,fps=fps=min(source_fps\,30)',
                     '-lossless', '0',
                     '-q:v', '53',
                     '-preset', 'default',
@@ -115,19 +115,4 @@ if st.session_state.converted_files:
             }}, {idx * 300});
             """
         js_code += "</script>"
-        st.components.v1.html(js_code, height=1, width=1)
-        st.session_state.download_trigger = False  # 실행 후 트리거 리셋
-
-    st.markdown("---")
-    st.subheader("📥 개별 다운로드 목록")
-
-    for idx, (output_name, orig_name, file_bytes, file_size_mb) in enumerate(st.session_state.converted_files):
-        st.write(f"**{idx + 1}. {output_name}** (원본: `{orig_name}` / {file_size_mb} MB)")
-        st.download_button(
-            label=f"📥 {output_name} 다운로드",
-            data=file_bytes,
-            file_name=output_name,
-            mime="image/webp",
-            key=f"rand_download_{idx}_{output_name}",
-            use_container_width=True
-        )
+        st.
