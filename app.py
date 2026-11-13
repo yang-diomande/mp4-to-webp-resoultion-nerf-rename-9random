@@ -8,7 +8,7 @@ import base64
 st.set_page_config(page_title="MP4 to WebP 일괄 변환기 (랜덤 파일명)", page_icon="🖼️", layout="centered")
 
 st.title("🖼️ 양의 WEBP 변환기")
-st.write("랜덤인 숫자 10자리 파일명으로 도출되며 화질 너프, 일괄 다운로드 진행 가능")
+st.write("10자리 랜덤 숫자 파일명으로 도출 & 화질 너프, 일괄 다운로드 가능.")
 st.write("여러 MP4 파일을 선택하면 일괄 변환하며 다운로드할 수 있습니다.")
 
 # 세션 상태 초기화
@@ -63,8 +63,8 @@ if uploaded_files:
                     '-y',
                     '-i', tmp_input_path,
                     '-vcodec', 'libwebp',
-                    # 💡 가로/세로 비율 고정 없이 원본 크기의 일정 비율(약 41.6%)만큼 화질/해상도만 균등하게 축소
-                    '-filter:v', 'scale=iw*0.416:ih*0.416,fps=fps=min(source_fps\,30)',
+                    # 💡 1920 기준 정확히 800으로 떨어지도록 정밀 수치(0.41666666) 적용
+                    '-filter:v', 'scale=iw*0.41666666:ih*0.41666666,fps=fps=min(source_fps\,30)',
                     '-lossless', '0',
                     '-q:v', '53',
                     '-preset', 'default',
