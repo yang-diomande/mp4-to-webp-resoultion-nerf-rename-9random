@@ -8,7 +8,7 @@ import base64
 st.set_page_config(page_title="MP4 to WebP 일괄 변환기 (랜덤 파일명)", page_icon="🖼️", layout="centered")
 
 st.title("🖼️ 양의 WEBP 변환기")
-st.write("10자리 랜덤 숫자 파일명 & 해상도 조정 & 일괄 다운로드 가능")
+st.write("10자리 랜덤 숫자 파일명 & 해상도 너프 & 일괄 다운로드 가능")
 st.write("여러 MP4 파일을 선택하면 일괄 변환하며 다운로드할 수 있습니다.")
 
 # 세션 상태 초기화
@@ -115,4 +115,19 @@ if st.session_state.converted_files:
             }}, {idx * 300});
             """
         js_code += "</script>"
-        st.
+        st.components.v1.html(js_code, height=1, width=1)
+        st.session_state.download_trigger = False  # 실행 후 트리거 리셋
+
+    st.markdown("---")
+    st.subheader("📥 개별 다운로드 목록")
+
+    for idx, (output_name, orig_name, file_bytes, file_size_mb) in enumerate(st.session_state.converted_files):
+        st.write(f"**{idx + 1}. {output_name}** (원본: `{orig_name}` / {file_size_mb} MB)")
+        st.download_button(
+            label=f"📥 {output_name} 다운로드",
+            data=file_bytes,
+            file_name=output_name,
+            mime="image/webp",
+            key=f"rand_download_{idx}_{output_name}",
+            use_container_width=True
+        )
