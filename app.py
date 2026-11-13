@@ -8,16 +8,14 @@ import base64
 st.set_page_config(page_title="MP4 to WebP 일괄 변환기 (랜덤 파일명)", page_icon="🖼️", layout="centered")
 
 st.title("🖼️ 양의 WEBP 변환기")
-st.write("10자리 랜덤 숫자 파일명 & 해상도 너프 & 일괄 다운로드 가능")
+st.write("10자리 랜덤 숫자 파일명 & 해상도 너프 & 일괄 다운로드 가능.")
 st.write("여러 MP4 파일을 선택하면 일괄 변환하며 다운로드할 수 있습니다.")
 
-# 세션 상태 초기화
 if "converted_files" not in st.session_state:
     st.session_state.converted_files = []
 if "download_trigger" not in st.session_state:
     st.session_state.download_trigger = False
 
-# 여러 파일 선택 지원
 uploaded_files = st.file_uploader(
     "", 
     type=["mp4"], 
@@ -29,27 +27,25 @@ if uploaded_files:
     st.info(f"📁 총 {len(uploaded_files)}개의 파일이 선택되었습니다.")
     
     if st.button("🔄 WEBP로 전체 변환 시작", type="primary", use_container_width=True):
-        progress_bar = st.progress(0)
+        total_files = len(uploaded_files)
+        progress_bar = st.progress(0.0)
         status_text = st.empty()
         
         temp_dir = tempfile.mkdtemp()
         st.session_state.converted_files = []
         st.session_state.download_trigger = False
 
-        # 앞자리 '1' 뒤에 오는 9자리 랜덤 시작 번호 생성 (100000000 ~ 999999999)
         start_rand_num = random.randint(100000000, 999999999)
 
         for idx, uploaded_file in enumerate(uploaded_files):
             current_num = start_rand_num + idx
             
-            # 9자리 범위를 넘어가면 오버플로우 처리
             if current_num > 999999999:
                 current_num = 100000000 + (current_num - 1000000000)
                 
-            # 맨 앞 '1' 고정 + 9자리 순차/랜덤 번호 조합 (총 10자리)
             output_name = f"1{current_num}.webp"
 
-            status_text.text(f"⏳ [{idx + 1}/{len(uploaded_files)}] 변환 중: {uploaded_file.name} ➔ {output_name}")
+            status_text.text(f"⏳ [{idx + 1}/{total_files}] 변환 중: {uploaded_file.name} ➔ {output_name}")
             
             tmp_input_path = os.path.join(temp_dir, uploaded_file.name)
             with open(tmp_input_path, "wb") as f:
@@ -63,7 +59,6 @@ if uploaded_files:
                     '-y',
                     '-i', tmp_input_path,
                     '-vcodec', 'libwebp',
-                    # 1920x1080 기준 정확히 800x450이 나오도록 0.417 배율 적용
                     '-filter:v', 'scale=iw*0.417:ih*0.417,fps=fps=min(source_fps\,30)',
                     '-lossless', '0',
                     '-q:v', '53',
@@ -84,12 +79,13 @@ if uploaded_files:
             except Exception as e:
                 st.error(f"❌ {uploaded_file.name} 변환 실패: {e}")
 
-            progress_bar.progress((idx + 1) / len(uploaded_files))
+            # 💡 수정된 부분: 첫 번째 파일부터 게이지가 차오르고, 마지막 파일이 끝나면 정확히 1.0(100%)이 되도록 계산
+            current_progress = (idx + 1) / total_files
+            progress_bar.progress(current_progress)
 
         status_text.empty()
         progress_bar.empty()
 
-# 변환 결과 출력 (항상 유지)
 if st.session_state.converted_files:
     st.success(f"🔮 총 {len(st.session_state.converted_files)}개 파일 변환 완료!")
     st.markdown("---")
@@ -99,7 +95,6 @@ if st.session_state.converted_files:
     if st.button("⚡ 변환된 WebP 전체 한 번에 다운로드", use_container_width=True, type="secondary"):
         st.session_state.download_trigger = True
 
-    # 일괄 다운로드 자바스크립트 실행 (0.3초 간격)
     if st.session_state.download_trigger:
         js_code = "<script>\n"
         for idx, (output_name, _, file_bytes, _) in enumerate(st.session_state.converted_files):
@@ -116,7 +111,7 @@ if st.session_state.converted_files:
             """
         js_code += "</script>"
         st.components.v1.html(js_code, height=1, width=1)
-        st.session_state.download_trigger = False  # 실행 후 트리거 리셋
+        st.session_state.download_trigger = False
 
     st.markdown("---")
     st.subheader("📥 개별 다운로드 목록")
